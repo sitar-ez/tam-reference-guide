@@ -13,7 +13,7 @@ const C = {
   grey:         "#d1d2d2",
   greyDim:      "#8a9bb8",
   warning:      "#f59e0b",
-  danger:       "#ef4444",
+  danger:       "#ef4445",
 };
 
 // ─── KETAMINE ROA DATA ────────────────────────────────────────────────────────
