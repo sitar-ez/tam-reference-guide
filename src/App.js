@@ -919,11 +919,23 @@ function HistoryPage({ substances, combinations }) {
 
 // ─── STORAGE HELPERS ─────────────────────────────────────────────────────────
 async function storageGet(key) {
-  try { const r = await window.storage.get(key, true); return r ? JSON.parse(r.value) : null; }
-  catch { return null; }
+  try {
+    if (window.storage) {
+      const r = await window.storage.get(key, true);
+      return r ? JSON.parse(r.value) : null;
+    }
+    const v = localStorage.getItem(key);
+    return v ? JSON.parse(v) : null;
+  } catch { return null; }
 }
 async function storageSet(key, val) {
-  try { await window.storage.set(key, JSON.stringify(val), true); } catch {}
+  try {
+    if (window.storage) {
+      await window.storage.set(key, JSON.stringify(val), true);
+    } else {
+      localStorage.setItem(key, JSON.stringify(val));
+    }
+  } catch {}
 }
 
 // ─── TRIP REPORT FORM ────────────────────────────────────────────────────────
