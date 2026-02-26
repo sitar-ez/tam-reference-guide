@@ -1227,203 +1227,93 @@ function TripReportDetail({ report, onBack, substances, combinations }) {
 }
 
 // ─── TRIP REPORTS PAGE ────────────────────────────────────────────────────────
+
+// ─── TRIP REPORTS PAGE ───────────────────────────────────────────────────────
 function TripReportsPage({ substances, combinations }) {
-  const [view, setView] = useState("grid"); // grid | list | form | detail
-  const [selectedSubstance, setSelectedSubstance] = useState(null);
-  const [selectedTab, setSelectedTab] = useState("substances");
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedReport, setSelectedReport] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-
   const STORAGE_KEY = "tam_trip_reports_v1";
-
-  const loadReports = useCallback(async () => {
-    setLoading(true);
-    const data = await storageGet(STORAGE_KEY);
-    setReports(Array.isArray(data) ? data : []);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { loadReports(); }, [loadReports]);
-
-  const handleSave = async (report) => {
-    setSaving(true);
-    const updated = [report, ...reports];
-    await storageSet(STORAGE_KEY, updated);
-    setReports(updated);
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => { setSaved(false); setView("grid"); }, 1600);
-  };
-
-  const selectSubstance = (item) => {
-    setSelectedSubstance(item);
-    setView("list");
-  };
-
-  const substanceReports = selectedSubstance
-    ? reports.filter(r => r.substanceId === selectedSubstance.id)
-    : [];
-
+  const [reports, setReports] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
+  });
+  const [view, setView] = useState("grid");
+  const [form, setForm] = useState({ title: "", substanceId: "", dose: "", set: "", setting: "", report: "" });
+  const [saved, setSaved] = useState(false);
   const all = [...substances, ...combinations];
-  const tabBtn = (active, label, onClick) => (
-    <button onClick={onClick} style={{ flex: 1, padding: "9px 0", fontSize: 13, fontWeight: 600, fontFamily: "'Merriweather Sans', sans-serif", background: active ? C.teal : "transparent", color: active ? C.bg : C.greyDim, border: "none", cursor: "pointer", borderRadius: 8, transition: "all 0.18s ease" }}>{label}</button>
+
+  const handleSave = () => {
+    if (!form.title || !form.report) return;
+    const newReport = { ...form, id: Date.now(), date: new Date().toLocaleDateString() };
+    const updated = [newReport, ...reports];
+    setReports(updated);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch {}
+    setSaved(true);
+    setTimeout(() => { setSaved(false); setView("grid"); setForm({ title: "", substanceId: "", dose: "", set: "", setting: "", report: "" }); }, 1500);
+  };
+
+  if (view === "form") return (
+    <div style={{ paddingBottom: 40 }}>
+      <button onClick={() => setView("grid")} style={{ background: "none", border: "none", color: C.teal, cursor: "pointer", fontSize: 13, fontFamily: "'Merriweather Sans', sans-serif", marginBottom: 16, padding: 0 }}>{"← Back"}</button>
+      <div style={{ color: C.white, fontSize: 16, fontFamily: "'Merriweather', serif", fontWeight: 700, marginBottom: 20 }}>Submit a Trip Report</div>
+      {[
+        { label: "Title", key: "title", placeholder: "Give your experience a title..." },
+        { label: "Dose", key: "dose", placeholder: "e.g. 25mg, 3.5g..." },
+        { label: "Set (mindset going in)", key: "set", placeholder: "How were you feeling beforehand?" },
+        { label: "Setting (environment)", key: "setting", placeholder: "Where were you, who were you with?" },
+      ].map(({ label, key, placeholder }) => (
+        <div key={key} style={{ marginBottom: 14 }}>
+          <div style={{ color: C.greyDim, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'Merriweather Sans', sans-serif", marginBottom: 6 }}>{label}</div>
+          <input value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder}
+            style={{ width: "100%", padding: "10px 12px", background: C.surface, border: "1px solid " + C.border, borderRadius: 10, color: C.white, fontSize: 13, fontFamily: "'Merriweather Sans', sans-serif", boxSizing: "border-box" }} />
+        </div>
+      ))}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ color: C.greyDim, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'Merriweather Sans', sans-serif", marginBottom: 6 }}>Substance</div>
+        <select value={form.substanceId} onChange={e => setForm(f => ({ ...f, substanceId: e.target.value }))}
+          style={{ width: "100%", padding: "10px 12px", background: C.surface, border: "1px solid " + C.border, borderRadius: 10, color: C.white, fontSize: 13, fontFamily: "'Merriweather Sans', sans-serif" }}>
+          <option value="">Select a substance...</option>
+          {all.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+      </div>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ color: C.greyDim, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "'Merriweather Sans', sans-serif", marginBottom: 6 }}>Your Report</div>
+        <textarea value={form.report} onChange={e => setForm(f => ({ ...f, report: e.target.value }))} placeholder="Describe your experience..."
+          style={{ width: "100%", padding: "10px 12px", background: C.surface, border: "1px solid " + C.border, borderRadius: 10, color: C.white, fontSize: 13, fontFamily: "'Merriweather Sans', sans-serif", minHeight: 160, resize: "vertical", boxSizing: "border-box" }} />
+      </div>
+      <button onClick={handleSave} style={{ width: "100%", padding: 14, background: saved ? C.tealSoft : C.teal, border: "none", borderRadius: 12, color: C.bg, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Merriweather Sans', sans-serif" }}>
+        {saved ? "✓ Saved!" : "Save Report"}
+      </button>
+    </div>
   );
 
-  // ── Detail view
-  if (view === "detail" && selectedReport) {
-    return <TripReportDetail report={selectedReport} onBack={() => setView("list")} substances={substances} combinations={combinations} />;
-  }
-
-  // ── New report form
-  if (view === "form") {
-    if (saving) return (
-      <div style={{ textAlign: "center", padding: "60px 20px" }}>
-        <div style={{ color: C.teal, fontSize: 28, marginBottom: 12 }}>⏳</div>
-        <div style={{ color: C.grey, fontFamily: "'Merriweather Sans', sans-serif" }}>Saving your report...</div>
-      </div>
-    );
-    if (saved) return (
-      <div style={{ textAlign: "center", padding: "60px 20px" }}>
-        <div style={{ color: C.tealSat, fontSize: 48, marginBottom: 16 }}>✓</div>
-        <div style={{ color: C.white, fontSize: 18, fontFamily: "'Merriweather', serif", fontWeight: 700, marginBottom: 8 }}>Report Saved</div>
-        <div style={{ color: C.greyDim, fontFamily: "'Merriweather Sans', sans-serif" }}>Your experience has been added to the community library.</div>
-      </div>
-    );
-    return <TripReportForm substances={substances} combinations={combinations} onSave={handleSave} onCancel={() => setView("grid")} />;
-  }
-
-  // ── Reports list for a substance
-  if (view === "list" && selectedSubstance) {
-    return (
-      <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <button onClick={() => setView("grid")} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: C.teal, cursor: "pointer", fontSize: 13, padding: 0, fontFamily: "'Merriweather Sans', sans-serif" }}>
-            ← All Substances
-          </button>
-          <button onClick={() => setView("form")} style={{ padding: "9px 18px", borderRadius: 20, background: C.teal, color: C.bg, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "'Merriweather Sans', sans-serif" }}>
-            + Add Report
-          </button>
-        </div>
-
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
-            <span style={{ padding: "3px 12px", borderRadius: 20, background: `${C.teal}22`, color: C.teal, fontSize: 11, fontFamily: "'Merriweather Sans', sans-serif" }}>
-              {selectedSubstance.isCombination ? "Combination" : selectedSubstance.category}
-            </span>
-            <span style={{ color: C.white, fontSize: 18, fontWeight: 700, fontFamily: "'Merriweather', serif" }}>{selectedSubstance.name}</span>
-          </div>
-          <div style={{ color: C.greyDim, fontSize: 12, fontFamily: "'Merriweather Sans', sans-serif" }}>
-            {substanceReports.length === 0 ? "No reports yet for this substance" : `${substanceReports.length} report${substanceReports.length === 1 ? "" : "s"}`}
-          </div>
-        </div>
-
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: C.greyDim, fontFamily: "'Merriweather Sans', sans-serif" }}>Loading reports...</div>
-        ) : substanceReports.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "50px 20px", background: C.surface, borderRadius: 16, border: `1px solid ${C.border}` }}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>🌿</div>
-            <div style={{ color: C.white, fontSize: 16, fontFamily: "'Merriweather', serif", fontWeight: 700, marginBottom: 8 }}>No reports yet</div>
-            <div style={{ color: C.greyDim, fontSize: 13, marginBottom: 24, fontFamily: "'Merriweather Sans', sans-serif" }}>Be the first to share an experience with {selectedSubstance.name}.</div>
-            <button onClick={() => setView("form")} style={{ padding: "12px 28px", borderRadius: 12, background: C.teal, color: C.bg, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700, fontFamily: "'Merriweather Sans', sans-serif" }}>
-              Write a Report
-            </button>
-          </div>
-        ) : substanceReports.map(r => {
-          const intensityNum = r.intensity ? parseInt(r.intensity[0]) : null;
-          const intensityColors = [C.tealSoft, C.teal, C.tealSat, C.warning, C.danger];
-          const iColor = intensityNum ? intensityColors[intensityNum - 1] : C.greyDim;
-          return (
-            <div key={r.id} onClick={() => { setSelectedReport(r); setView("detail"); }}
-              style={{ background: C.surface, borderRadius: 14, padding: 18, border: `1px solid ${C.border}`, marginBottom: 10, cursor: "pointer", transition: "all 0.15s" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                <div style={{ color: C.white, fontSize: 15, fontFamily: "'Merriweather', serif", fontWeight: 700, lineHeight: 1.3, flex: 1, marginRight: 10 }}>{r.title}</div>
-                {r.intensity && <span style={{ color: iColor, fontSize: 11, fontFamily: "'Merriweather Sans', sans-serif", whiteSpace: "nowrap" }}>⚡ {r.intensity.split(" – ")[1]}</span>}
-              </div>
-              <div style={{ color: C.grey, fontSize: 13, fontFamily: "'Merriweather Sans', sans-serif", lineHeight: 1.5, marginBottom: 12, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>
-                {r.report}
-              </div>
-              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                {r.date && <span style={{ color: C.greyDim, fontSize: 11, fontFamily: "'Merriweather Sans', sans-serif" }}>📅 {r.date}</span>}
-                {r.dose && <span style={{ color: C.greyDim, fontSize: 11, fontFamily: "'Merriweather Sans', sans-serif" }}>💊 {r.dose} {r.unit}</span>}
-                {r.mood && <span style={{ color: C.greyDim, fontSize: 11, fontFamily: "'Merriweather Sans', sans-serif" }}>{r.mood}</span>}
-                {r.setting && <span style={{ color: C.greyDim, fontSize: 11, fontFamily: "'Merriweather Sans', sans-serif" }}>📍 {r.setting}</span>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  // ── Substance grid (default)
-  const substancesWithCounts = substances.map(s => ({ ...s, count: reports.filter(r => r.substanceId === s.id).length }));
-  const combinationsWithCounts = combinations.map(c => ({ ...c, count: reports.filter(r => r.substanceId === c.id).length }));
-
   return (
-    <div>
-      {/* Intro + Add button */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, marginTop: 4 }}>
+    <div style={{ paddingBottom: 40 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
-          <div style={{ color: C.white, fontSize: 16, fontFamily: "'Merriweather', serif", fontWeight: 700, marginBottom: 4 }}>Community Trip Reports</div>
-          <div style={{ color: C.greyDim, fontSize: 12, fontFamily: "'Merriweather Sans', sans-serif" }}>
-            {loading ? "Loading..." : `${reports.length} report${reports.length === 1 ? "" : "s"} shared by the community`}
-          </div>
+          <div style={{ color: C.white, fontSize: 16, fontFamily: "'Merriweather', serif", fontWeight: 700, marginBottom: 4 }}>Trip Reports</div>
+          <div style={{ color: C.greyDim, fontSize: 12, fontFamily: "'Merriweather Sans', sans-serif" }}>{reports.length} report{reports.length !== 1 ? "s" : ""} saved</div>
         </div>
-        <button onClick={() => setView("form")} style={{ padding: "10px 18px", borderRadius: 20, background: C.teal, color: C.bg, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "'Merriweather Sans', sans-serif", flexShrink: 0, marginLeft: 12 }}>
-          + Write Report
+        <button onClick={() => setView("form")} style={{ padding: "10px 16px", background: C.teal, border: "none", borderRadius: 10, color: C.bg, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Merriweather Sans', sans-serif" }}>
+          + New Report
         </button>
       </div>
-
-      {/* Tabs + grid */}
-      <div style={{ background: C.surface, borderRadius: 16, padding: 18, border: `1px solid ${C.border}` }}>
-        <div style={{ display: "flex", gap: 6, marginBottom: 16, background: C.bg, borderRadius: 10, padding: 4 }}>
-          {tabBtn(selectedTab === "substances", "Single Substances", () => setSelectedTab("substances"))}
-          {tabBtn(selectedTab === "combinations", "Combinations", () => setSelectedTab("combinations"))}
+      {reports.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "60px 20px", color: C.greyDim, fontFamily: "'Merriweather Sans', sans-serif" }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>{"📝"}</div>
+          <div style={{ fontSize: 14, marginBottom: 8 }}>No reports yet</div>
+          <div style={{ fontSize: 12 }}>Submit your first trip report to start building your personal journal.</div>
         </div>
-        {selectedTab === "substances" ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-            {substancesWithCounts.map(s => (
-              <button key={s.id} onClick={() => selectSubstance(s)} style={{ padding: "11px 8px", background: C.surfaceLight, color: C.tealSoft, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "'Merriweather Sans', sans-serif", textAlign: "center", lineHeight: 1.25, transition: "all 0.15s ease" }}>
-                <div>{s.name}</div>
-                <div style={{ fontSize: 10, opacity: 0.6, marginTop: 3 }}>{s.count > 0 ? `${s.count} report${s.count === 1 ? "" : "s"}` : s.category}</div>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {combinationsWithCounts.map(c => (
-              <button key={c.id} onClick={() => selectSubstance(c)} style={{ padding: "13px 16px", background: C.surfaceLight, color: C.tealSoft, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer", fontFamily: "'Merriweather Sans', sans-serif", textAlign: "left", lineHeight: 1.3, transition: "all 0.15s ease" }}>
-                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 3 }}>{c.name}</div>
-                <div style={{ fontSize: 11, opacity: 0.7 }}>{c.count > 0 ? `${c.count} report${c.count === 1 ? "" : "s"}` : c.components.map(id => substances.find(s => s.id === id)?.name).join(" + ")}</div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Recent reports preview */}
-      {!loading && reports.length > 0 && (
-        <div style={{ marginTop: 20 }}>
-          <div style={{ color: C.greyDim, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'Merriweather Sans', sans-serif", marginBottom: 12 }}>Recent Reports</div>
-          {reports.slice(0, 3).map(r => {
-            const subst = all.find(s => s.id === r.substanceId);
-            return (
-              <div key={r.id} onClick={() => {
-                const s = all.find(x => x.id === r.substanceId);
-                if (s) { setSelectedSubstance(s); setSelectedReport(r); setView("detail"); }
-              }} style={{ background: C.surface, borderRadius: 12, padding: 16, border: `1px solid ${C.border}`, marginBottom: 8, cursor: "pointer", transition: "all 0.15s" }}>
-                <div style={{ display: "flex", gap: 8, marginBottom: 6, alignItems: "center" }}>
-                  <span style={{ padding: "2px 10px", borderRadius: 20, background: `${C.teal}22`, color: C.teal, fontSize: 10, fontFamily: "'Merriweather Sans', sans-serif" }}>{r.substanceName}</span>
-                  {r.mood && <span style={{ color: C.greyDim, fontSize: 11 }}>{r.mood}</span>}
-                </div>
-                <div style={{ color: C.white, fontSize: 14, fontFamily: "'Merriweather', serif", fontWeight: 700, marginBottom: 4 }}>{r.title}</div>
-                <div style={{ color: C.greyDim, fontSize: 12, fontFamily: "'Merriweather Sans', sans-serif", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{r.report}</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {reports.map(r => (
+            <div key={r.id} style={{ background: C.surface, borderRadius: 12, padding: 16, border: "1px solid " + C.border, borderLeft: "3px solid " + C.teal + "55" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ color: C.teal, fontSize: 11, fontFamily: "'Merriweather Sans', sans-serif" }}>{all.find(s => s.id === r.substanceId)?.name || "Unknown"}</span>
+                <span style={{ color: C.greyDim, fontSize: 11, fontFamily: "'Merriweather Sans', sans-serif" }}>{r.date}</span>
               </div>
-            );
-          })}
+              <div style={{ color: C.white, fontSize: 14, fontFamily: "'Merriweather', serif", fontWeight: 700, marginBottom: 6 }}>{r.title}</div>
+              {r.dose && <div style={{ color: C.greyDim, fontSize: 12, fontFamily: "'Merriweather Sans', sans-serif", marginBottom: 6 }}>Dose: {r.dose}</div>}
+              <div style={{ color: C.greyDim, fontSize: 12, fontFamily: "'Merriweather Sans', sans-serif", lineHeight: 1.6 }}>{r.report}</div>
+            </div>
+          ))}
         </div>
       )}
     </div>
