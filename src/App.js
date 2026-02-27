@@ -1,3 +1,4 @@
+// Build: 2026-02-27 01:19:48
 import { useState, useRef, useEffect, useCallback } from "react";
 
 // ─── BRAND COLORS ─────────────────────────────────────────────────────────────
@@ -15,7 +16,6 @@ const C = {
   warning:      "#f59e0b",
   danger:       "#ef4444",
 };
-
 
 // ─── KETAMINE ROA DATA ────────────────────────────────────────────────────────
 const KETAMINE_ROAS = {
