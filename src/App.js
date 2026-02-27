@@ -1,4 +1,4 @@
-// Build: 2026-02-27 01:19:48
+// Build: 2026-02-27 21:25:19
 import { useState, useRef } from "react";
 
 // ─── BRAND COLORS ─────────────────────────────────────────────────────────────
@@ -779,7 +779,7 @@ function HistoryPage({ substances, combinations }) {
     <div style={{ paddingBottom: 40 }}>
       {active ? (
         <>
-          <button onClick={() => setActiveId(null)} style={{ background: "none", border: "none", color: C.teal, cursor: "pointer", fontSize: 14, padding: "0 0 16px", fontFamily: "'Merriweather Sans', sans-serif", display: "flex", alignItems: "center", gap: 6 }}>
+          <button onClick={() => setActiveId(null)} style={{ background: C.surface, border: "1px solid " + C.teal + "66", color: C.teal, cursor: "pointer", fontSize: 14, padding: "9px 16px", borderRadius: 8, fontFamily: "'Merriweather Sans', sans-serif", display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 18, fontWeight: 600 }}>
             ← Back to all medicines
           </button>
           <h2 style={{ color: C.tealSoft, fontFamily: "'Merriweather', serif", margin: "0 0 10px", fontSize: 22 }}>{active.name}</h2>
@@ -933,66 +933,51 @@ function TripReportsPage({ substances, combinations }) {
 
 
 function ResourceLibraryPage() {
-  const RESOURCES = [
-    { category: "Integration Support", emoji: "🌿", items: [
-      { name: "MAPS (Multidisciplinary Association for Psychedelic Studies)", url: "https://maps.org", desc: "Leading nonprofit research organization for psychedelic-assisted therapy" },
-      { name: "Zendo Project", url: "https://www.zendoproject.org", desc: "Psychedelic harm reduction and support at events and communities" },
-      { name: "Fireside Project", url: "https://firesideproject.org", desc: "Psychedelic peer support line: 62-FIRESIDE (1-623-473-7433)" },
-      { name: "PRISM", url: "https://prism.org.au", desc: "Psychedelic Research in Science & Medicine — Australia" },
-    ]},
-    { category: "Education & Research", emoji: "📚", items: [
-      { name: "Erowid", url: "https://erowid.org", desc: "Comprehensive library of psychoactive substance information and trip reports" },
-      { name: "PsychonautWiki", url: "https://psychonautwiki.org", desc: "Community-sourced encyclopedia of psychoactive substances" },
-      { name: "Psychedelic Alpha", url: "https://psychedelicalpha.com", desc: "News and analysis of the psychedelic industry and research landscape" },
-      { name: "The Third Wave", url: "https://thethirdwave.co", desc: "Guides, courses, and community for intentional psychedelic use" },
-    ]},
-    { category: "Harm Reduction", emoji: "🛡️", items: [
-      { name: "DanceSafe", url: "https://dancesafe.org", desc: "Harm reduction nonprofit with drug checking services and education" },
-      { name: "TripSit", url: "https://tripsit.me", desc: "Real-time drug information, interaction checker, and live chat support" },
-      { name: "Reagent Testing Australia", url: "https://reagenttesting.com.au", desc: "Reagent test kits for identifying substances before use" },
-      { name: "Drug Policy Alliance", url: "https://drugpolicy.org", desc: "Advocacy organization working to end the war on drugs" },
-    ]},
-    { category: "Clinical Trials & Research", emoji: "🔬", items: [
-      { name: "Johns Hopkins Center for Psychedelic Research", url: "https://hopkinspsychedelic.org", desc: "Leading academic research center for psilocybin and other psychedelics" },
-      { name: "NYU Langone Center for Psychedelic Medicine", url: "https://med.nyu.edu/departments-institutes/psychiatry/research/psychedelic-medicine", desc: "Clinical research into MDMA, psilocybin, and ketamine therapies" },
-      { name: "Imperial College London Centre for Psychedelic Research", url: "https://www.imperial.ac.uk/psychedelic-research-centre", desc: "UK's first psychedelic research centre, led by Dr. Robin Carhart-Harris" },
-      { name: "ClinicalTrials.gov – Psychedelics", url: "https://clinicaltrials.gov/search?term=psychedelic", desc: "Search all active and completed psychedelic clinical trials worldwide" },
-    ]},
-    { category: "Books & Documentaries", emoji: "📖", items: [
-      { name: "How to Change Your Mind — Michael Pollan", url: "https://michaelpollan.com/books/how-to-change-your-mind/", desc: "Accessible, deeply researched exploration of psychedelics and the science of consciousness" },
-      { name: "The Psychedelic Explorer's Guide — James Fadiman", url: "https://www.jamesfadiman.com", desc: "Practical guide to psychedelic journeys for personal growth and therapeutic purpose" },
-      { name: "DMT: The Spirit Molecule — Rick Strassman", url: "https://www.rickstrassman.com", desc: "Chronicle of clinical DMT research and the endogenous DMT hypothesis" },
-      { name: "PiHKAL & TiHKAL — Alexander Shulgin", url: "https://erowid.org/library/books_online/pihkal/pihkal.shtml", desc: "Shulgin's landmark synthesis of phenethylamines and tryptamines with first-person accounts" },
-    ]},
-  ];
+  const bySubstance = Object.entries(SUBSTANCE_SOURCE_MAP).map(([id, sourceIds]) => {
+    const substance = [...SUBSTANCES, ...COMBINATIONS].find(s => s.id === id);
+    const sources = sourceIds.map(sid => SOURCES[sid]).filter(Boolean);
+    return { id, name: substance?.name || id, sources };
+  }).filter(s => s.sources.length > 0);
+
+  const [open, setOpen] = useState(null);
 
   return (
     <div style={{ paddingBottom: 40 }}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ color: C.white, fontSize: 16, fontFamily: "'Merriweather', serif", fontWeight: 700, marginBottom: 6 }}>Resource Library</div>
-        <div style={{ color: C.greyDim, fontSize: 13, fontFamily: "'Merriweather Sans', sans-serif", lineHeight: 1.6 }}>
-          Curated resources for education, harm reduction, integration support, and clinical research.
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ color: C.white, fontSize: 16, fontFamily: "'Merriweather', serif", fontWeight: 700, marginBottom: 6 }}>References & Sources</div>
+        <div style={{ color: C.greyDim, fontSize: 12, fontFamily: "'Merriweather Sans', sans-serif", lineHeight: 1.6 }}>
+          All sources used in this guide, organized by substance.
         </div>
       </div>
-      {RESOURCES.map(section => (
-        <div key={section.category} style={{ marginBottom: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <span style={{ fontSize: 16 }}>{section.emoji}</span>
-            <div style={{ color: C.greyDim, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'Merriweather Sans', sans-serif" }}>{section.category}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {bySubstance.map(({ id, name, sources }) => (
+          <div key={id} style={{ background: C.surface, borderRadius: 12, border: "1px solid " + C.border, overflow: "hidden" }}>
+            <button onClick={() => setOpen(open === id ? null : id)} style={{
+              width: "100%", padding: "14px 16px", background: "none", border: "none", cursor: "pointer",
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              fontFamily: "'Merriweather Sans', sans-serif",
+            }}>
+              <span style={{ color: C.white, fontSize: 14, fontWeight: 600 }}>{name}</span>
+              <span style={{ color: C.teal, fontSize: 12 }}>{sources.length} source{sources.length !== 1 ? "s" : ""} {open === id ? "▲" : "▼"}</span>
+            </button>
+            {open === id && (
+              <div style={{ borderTop: "1px solid " + C.border, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                {sources.map((s, i) => (
+                  <div key={i} style={{ paddingLeft: 12, borderLeft: "3px solid " + C.teal + "44" }}>
+                    <div style={{ color: C.white, fontSize: 12, fontWeight: 600, fontFamily: "'Merriweather', serif", marginBottom: 2 }}>{s.title}</div>
+                    <div style={{ color: C.greyDim, fontSize: 11, fontFamily: "'Merriweather Sans', sans-serif", marginBottom: 3 }}>{s.authors} — <em>{s.journal}</em>, {s.year}</div>
+                    <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: C.teal, fontSize: 10, fontFamily: "'Merriweather Sans', sans-serif", wordBreak: "break-all" }}>{s.url} ↗</a>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {section.items.map(item => (
-              <a key={item.name} href={item.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "14px 16px", background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, textDecoration: "none", transition: "all 0.15s", borderLeft: `3px solid ${C.teal}55` }}>
-                <div style={{ color: C.tealSoft, fontSize: 13, fontWeight: 600, fontFamily: "'Merriweather Sans', sans-serif", marginBottom: 4 }}>{item.name} ↗</div>
-                <div style={{ color: C.greyDim, fontSize: 12, fontFamily: "'Merriweather Sans', sans-serif", lineHeight: 1.5 }}>{item.desc}</div>
-              </a>
-            ))}
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
+
 
 // ─── SHARED STYLES ────────────────────────────────────────────────────────────
 const SL = { color: C.greyDim, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'Merriweather Sans', sans-serif", marginBottom: 14 };
@@ -1064,10 +1049,15 @@ export default function App() {
       <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Merriweather+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
       {/* Header */}
-      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "22px 20px 18px", textAlign: "center" }}>
-        <div style={{ fontFamily: "'Merriweather', serif", fontWeight: 700, color: C.tealSoft, marginBottom: 4, fontSize: "clamp(15px,3.5vw,20px)", letterSpacing: "0.02em" }}>Tam Integration</div>
-        <h1 style={{ margin: 0, fontSize: "clamp(13px,2.8vw,16px)", fontWeight: 400, fontFamily: "'Merriweather', serif", fontStyle: "italic", color: C.grey, lineHeight: 1.35 }}>Guide to Popular Molecules</h1>
-        <p style={{ margin: "7px 0 0", color: C.greyDim, fontSize: 11, fontFamily: "'Merriweather Sans', sans-serif" }}>Evidence-based psychedelic substance reference</p>
+      <div style={{ background: "#f5f3ef", borderBottom: "1px solid #ddd", padding: "14px 20px" }}>
+        <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", alignItems: "center", gap: 14 }}>
+          <img src="https://tamintegration.com/wp-content/uploads/2021/11/cropped-tam-logo-clear.png" alt="Tam Integration" style={{ height: 52, width: "auto", flexShrink: 0 }} />
+          <div>
+            <div style={{ fontFamily: "'Merriweather', serif", fontWeight: 700, color: "#1a2a3a", marginBottom: 2, fontSize: "clamp(15px,3.5vw,20px)", letterSpacing: "0.02em" }}>Tam Integration</div>
+            <h1 style={{ margin: 0, fontSize: "clamp(12px,2.5vw,14px)", fontWeight: 400, fontFamily: "'Merriweather', serif", fontStyle: "italic", color: "#3a4a5a", lineHeight: 1.35 }}>Guide to Popular Molecules</h1>
+            <p style={{ margin: "3px 0 0", color: "#5a6a7a", fontSize: 11, fontFamily: "'Merriweather Sans', sans-serif" }}>Evidence-based psychedelic substance reference</p>
+          </div>
+        </div>
       </div>
 
       {/* Nav Bar — 4 tabs in 2×2 grid */}
