@@ -1,5 +1,5 @@
 // Build: 2026-02-27 01:19:48
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef } from "react";
 
 // ─── BRAND COLORS ─────────────────────────────────────────────────────────────
 const C = {
@@ -1005,7 +1005,6 @@ export default function App() {
   const [comboDoses, setComboDoses] = useState({});
   const [showSources, setShowSources] = useState(false);
   const [showAllRefs, setShowAllRefs] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
   const [booster, setBooster] = useState({ enabled: false, time: 60, dose: 0 });
   const [selectedRoa, setSelectedRoa] = useState("lozenge");
   const [selectedMeoSource, setSelectedMeoSource] = useState("synthetic");
