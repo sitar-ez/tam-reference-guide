@@ -1,7 +1,86 @@
+/**
+ * App.js — Tam Integration: Guide to Popular Molecules
+ *
+ * Single-file React application providing evidence-based psychedelic substance
+ * reference information for coaches, clients, and the general public.
+ *
+ * STRUCTURE:
+ *   1.  Brand colors (C)
+ *   2.  Ketamine ROA data (KETAMINE_ROAS)
+ *   3.  5-MeO-DMT source data (MEO_SOURCES)
+ *   4.  Substance data (SUBSTANCES)
+ *   5.  Combination data (COMBINATIONS)
+ *   6.  Academic sources (SOURCES)
+ *   7.  Source map (SUBSTANCE_SOURCE_MAP)
+ *   8.  Helper functions
+ *   9.  UI Components: IntensityGraph, SubstanceGrid, DoseSlider,
+ *       SourcesModal, AllReferencesModal, HistoryPage, TripReportsPage,
+ *       ResourceLibraryPage
+ *   10. Main App component
+ *
+ * PAGES (tabs):
+ *   dosages  → Dose slider, intensity graph, effects, safety
+ *   history  → Descriptions and historical background per substance
+ *   library  → Full reference list organized by substance
+ *   reports  → User trip journal (stored in localStorage)
+ *
+ * DATA SCHEMA — each substance in SUBSTANCES has:
+ *   id, name, category, unit,
+ *   doses { threshold, light, moderate, strong, heavy },
+ *   onset(min), peak(min), duration(min), history,
+ *   effects { light, moderate, strong, heavy },
+ *   safety[], boosterInfo, sources[], historySources[]
+ *
+ *   Special flags:
+ *     isKetamine: true  → uses KETAMINE_ROAS for ROA-specific dosing
+ *     is5MeO: true      → uses MEO_SOURCES for source-specific dosing
+ *     isCombination: true → uses components[] array of substance IDs
+ *
+ * Last built: 2026-02-27
+ */
+/**
+ * App.js — Tam Integration: Guide to Popular Molecules
+ *
+ * Single-file React application providing evidence-based psychedelic substance
+ * reference information for coaches, clients, and the general public.
+ *
+ * STRUCTURE:
+ *   1.  Brand colors (C)
+ *   2.  Ketamine ROA data (KETAMINE_ROAS)
+ *   3.  5-MeO-DMT source data (MEO_SOURCES)
+ *   4.  Substance data (SUBSTANCES)
+ *   5.  Combination data (COMBINATIONS)
+ *   6.  Academic sources (SOURCES)
+ *   7.  Source map (SUBSTANCE_SOURCE_MAP)
+ *   8.  Helper functions
+ *   9.  UI Components: IntensityGraph, SubstanceGrid, DoseSlider,
+ *       SourcesModal, AllReferencesModal, HistoryPage, TripReportsPage,
+ *       ResourceLibraryPage
+ *   10. Main App component
+ *
+ * PAGES (tabs):
+ *   dosages  → Dose slider, intensity graph, effects, safety
+ *   history  → Descriptions and historical background per substance
+ *   library  → Full reference list organized by substance
+ *   reports  → User trip journal (stored in localStorage)
+ *
+ * DATA SCHEMA — each substance in SUBSTANCES has:
+ *   id, name, category, unit, doses{threshold,light,moderate,strong,heavy},
+ *   onset(min), peak(min), duration(min), history, effects{light,moderate,strong,heavy},
+ *   safety[], boosterInfo, sources[], historySources[]
+ *
+ *   Special flags:
+ *   - isKetamine: true → uses KETAMINE_ROAS for ROA-specific dosing
+ *   - is5MeO: true     → uses MEO_SOURCES for source-specific dosing
+ *   - isCombination: true → uses components[] array of substance IDs
+ *
+ * Last built: 2026-02-27
+ */
 // Build: 2026-02-27 21:25:19
 import { useState, useRef } from "react";
 
 // ─── BRAND COLORS ─────────────────────────────────────────────────────────────
+// Central color palette used throughout all inline styles.
 const C = {
   bg:           "#0e1628",
   surface:      "#182243",
@@ -18,6 +97,18 @@ const C = {
 };
 
 // ─── KETAMINE ROA DATA ────────────────────────────────────────────────────────
+/**
+ * Ketamine dosing differs significantly by route of administration (ROA).
+ * Each entry has its own dose range, bioavailability, onset/peak/duration,
+ * effects, safety notes, and sources.
+ *
+ * ROA entries: lozenge | insufflation | iv | im
+ *
+ * Each entry shape:
+ *   { id, label, unit, bioavailability, doses{threshold,light,moderate,strong,heavy},
+ *     onset(min), peak(min), duration(min), notes, effects{light,moderate,strong,heavy},
+ *     safety[], sources[] }
+ */
 const KETAMINE_ROAS = {
   lozenge: {
     id: "lozenge", label: "Lozenge / Troche", unit: "mg", bioavailability: "25–30%",
@@ -78,6 +169,14 @@ const KETAMINE_ROAS = {
 };
 
 // ─── 5-MEO-DMT SOURCE DATA ────────────────────────────────────────────────────
+/**
+ * 5-MeO-DMT potency and safety differ by source: synthetic (pure) vs.
+ * toad venom (Bufo alvarius). We store separate dose profiles for each.
+ * Synthetic is significantly more potent by weight and more precisely dosed.
+ *
+ * Entries: toad | synthetic
+ * Same shape as a standard substance (doses, onset, peak, duration, effects, safety, sources).
+ */
 const MEO_SOURCES = {
   toad: {
     id: "toad", label: "Toad Venom (Bufo alvarius)", unit: "mg",
@@ -110,6 +209,29 @@ const MEO_SOURCES = {
 };
 
 // ─── SUBSTANCE DATA ───────────────────────────────────────────────────────────
+/**
+ * Array of all single-substance entries.
+ *
+ * Standard substance schema:
+ * {
+ *   id: string               — unique key, matches SUBSTANCE_SOURCE_MAP
+ *   name: string             — display name
+ *   category: string         — pharmacological class (Tryptamine, Empathogen, etc.)
+ *   unit: string             — dose unit (mg, μg, mL, mg/kg, buttons)
+ *   doses: { threshold, light, moderate, strong, heavy }  — all in `unit`
+ *   onset: number            — minutes to first effects
+ *   peak: number             — minutes to peak effects
+ *   duration: number         — total duration in minutes
+ *   history: string          — long-form historical narrative (shown in History tab)
+ *   effects: { light, moderate, strong, heavy }  — each an array of effect strings
+ *   safety: string[]         — harm reduction notes
+ *   boosterInfo: string      — guidance on supplemental dosing
+ *   sources: string[]        — primary source IDs (dosage/pharmacology)
+ *   historySources: string[] — source IDs for the history section
+ *   isKetamine?: true        — enables ROA selector, uses KETAMINE_ROAS for dosing
+ *   is5MeO?: true            — enables source selector, uses MEO_SOURCES for dosing
+ * }
+ */
 const SUBSTANCES = [
   {
     id: "psilocybin", name: "Psilocybin", category: "Tryptamine", unit: "mg",
@@ -355,6 +477,30 @@ const SUBSTANCES = [
   }
 ];
 
+/**
+ * COMBINATIONS — multi-substance entries.
+ *
+ * Extends the standard substance schema with:
+ *   isCombination: true   — flags this for combination rendering in the UI
+ *   description: string   — short summary shown in the dosage panel
+ *   components: string[]  — IDs of constituent substances from SUBSTANCES
+ *   timing: string        — guidance on how to stagger each substance
+ *
+ * Combinations do not use the intensity graph or single dose slider.
+ * Each component substance gets its own DoseSlider.
+ */
+/**
+ * COMBINATIONS — multi-substance entries.
+ *
+ * Extends the standard substance schema with:
+ *   isCombination: true   — flags this for combination UI rendering
+ *   description: string   — short summary shown in the dosage panel
+ *   components: string[]  — IDs of constituent substances (from SUBSTANCES)
+ *   timing: string        — guidance on how to stagger each substance
+ *
+ * Combinations do not show the intensity graph or single DoseSlider.
+ * Each component gets its own DoseSlider.
+ */
 const COMBINATIONS = [
   {
     id: "candy_flip", name: "Candy Flip", isCombination: true,
@@ -389,6 +535,11 @@ const COMBINATIONS = [
 ];
 
 // ─── SOURCES ─────────────────────────────────────────────────────────────────
+/**
+ * Master dictionary of all academic/book sources used in the app.
+ * Keys are source IDs referenced in substance .sources[] and .historySources[].
+ * Each entry: { title, authors, journal, year, url }
+ */
 const SOURCES = {
   source_psilocybin_1: { title: "Psilocybin-occasioned mystical-type experience in combination with meditation and other spiritual practices", authors: "Barrett, F.S., et al.", journal: "Journal of Psychopharmacology", year: 2020, url: "https://doi.org/10.1177/0269881119897328" },
   source_psilocybin_2: { title: "Psilocybin produces substantial and sustained decreases in depression and anxiety in patients with life-threatening cancer", authors: "Griffiths, R.R., et al.", journal: "Journal of Psychopharmacology", year: 2016, url: "https://doi.org/10.1177/0269881116675513" },
@@ -462,6 +613,10 @@ const SOURCES = {
 };
 
 // ─── SOURCE MAP ───────────────────────────────────────────────────────────────
+/**
+ * Maps each substance/combination ID to all relevant source IDs (dosage + history).
+ * Used by ResourceLibraryPage and AllReferencesModal to build per-substance source lists.
+ */
 const SUBSTANCE_SOURCE_MAP = {
   psilocybin:   ["source_psilocybin_1", "source_psilocybin_2", "source_psilocybin_3", "source_redosing_1", "source_psilocybin_history_1", "source_psilocybin_history_2"],
   lsd:          ["source_lsd_1", "source_lsd_2", "source_lsd_tolerance", "source_redosing_1", "source_lsd_history_1", "source_lsd_history_2"],
@@ -484,6 +639,13 @@ const SUBSTANCE_SOURCE_MAP = {
 };
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+/**
+ * Returns the dose category string for a given dose value.
+ * @param {object} doses - { threshold, light, moderate, strong, heavy }
+ * @param {number} dose  - Current dose in the substance's unit
+ * @returns {string} "sub-threshold" | "light" | "moderate" | "strong" | "heavy"
+ */
 function getDoseCategory(doses, dose) {
   const d = doses;
   if (dose < d.threshold) return "sub-threshold";
@@ -492,6 +654,20 @@ function getDoseCategory(doses, dose) {
   if (dose < d.strong) return "strong";
   return "heavy";
 }
+/**
+ * Returns a display label and color for the current dose category.
+ * Used by DoseSlider and the effects panel header.
+ * @param {object} doses - Dose thresholds object
+ * @param {number} dose  - Current dose value
+ * @returns {{ label: string, color: string }}
+ */
+/**
+ * Returns a display label and accent color for the current dose tier.
+ * Used by DoseSlider and the effects panel header badge.
+ * @param {object} doses - Dose thresholds object
+ * @param {number} dose  - Current dose value
+ * @returns {{ label: string, color: string }}
+ */
 function getDoseCategoryLabel(doses, dose) {
   const d = doses;
   if (dose < d.threshold) return { label: "Sub-threshold", color: C.greyDim };
@@ -501,6 +677,21 @@ function getDoseCategoryLabel(doses, dose) {
   if (dose < d.heavy)     return { label: "Strong",        color: C.warning };
   return                         { label: "Heavy",         color: C.danger };
 }
+/**
+ * Generates {t, v} data points for the intensity graph SVG.
+ *
+ * Models intensity over time using:
+ *   - Linear ramp-up from onset to peak
+ *   - Exponential decay from peak onward
+ *   - Optional booster: a second overlapping curve added starting at booster.time
+ *
+ * @param {number} onset        - Minutes to first effects
+ * @param {number} peak         - Minutes to peak intensity
+ * @param {number} duration     - Total duration in minutes
+ * @param {number} maxIntensity - Peak intensity on a 0–10 scale
+ * @param {object|null} booster - { time, intensity, peak, duration } or null
+ * @returns {Array<{t: number, v: number}>} Sampled every 2 minutes
+ */
 function generateCurve(onset, peak, duration, maxIntensity, booster) {
   const totalTime = booster ? Math.max(duration, booster.time + booster.duration) + 30 : duration + 30;
   const points = [];
@@ -527,6 +718,16 @@ function generateCurve(onset, peak, duration, maxIntensity, booster) {
 }
 
 // ─── INTENSITY GRAPH ─────────────────────────────────────────────────────────
+/**
+ * SVG line chart showing estimated intensity over time.
+ * Scales the curve based on dose relative to the heavy threshold.
+ * Optionally overlays a booster curve with a dashed vertical marker.
+ *
+ * Props:
+ *   src     {object} - Active substance/ROA/source data (onset, peak, duration, doses)
+ *   dose    {number} - Current primary dose value
+ *   booster {object} - Booster state: { enabled, time, dose }
+ */
 function IntensityGraph({ src, dose, booster }) {
   const W = 600, H = 200, PL = 38, PR = 16, PT = 14, PB = 32;
   const doseRatio = Math.max(0.05, dose / src.doses.heavy);
@@ -568,6 +769,17 @@ function IntensityGraph({ src, dose, booster }) {
 }
 
 // ─── SUBSTANCE GRID ───────────────────────────────────────────────────────────
+/**
+ * Tabbed grid for selecting a substance or combination.
+ *   Tab 1: 3-column grid of single substances
+ *   Tab 2: Vertical list of combinations
+ *
+ * Props:
+ *   substances   {Array}    - SUBSTANCES array
+ *   combinations {Array}    - COMBINATIONS array
+ *   selected     {object}   - Currently selected item
+ *   onSelect     {function} - Callback when an item is clicked
+ */
 function SubstanceGrid({ substances, combinations, selected, onSelect }) {
   const [tab, setTab] = useState("substances");
   const tabBtn = (active, label, onClick) => (
@@ -610,6 +822,23 @@ function SubstanceGrid({ substances, combinations, selected, onSelect }) {
 }
 
 // ─── DOSE SLIDER WITH MANUAL INPUT ───────────────────────────────────────────
+/**
+ * Compound slider with nudge buttons and click-to-type manual input.
+ *   - Range input for dragging
+ *   - ◀◀ / ◀ / ▶ / ▶▶ buttons (1x and 10x step)
+ *   - Click the value to type a number directly (Enter to commit, Escape to cancel)
+ *   - Optional dose category label badge
+ *
+ * Props:
+ *   label       {string}   - Slider label text
+ *   value       {number}   - Current value
+ *   min/max     {number}   - Range bounds
+ *   step        {number}   - Increment size
+ *   unit        {string}   - Unit label displayed after the value
+ *   onChange    {function} - Callback(newValue)
+ *   accentColor {string}   - Optional slider accent color (default: C.teal)
+ *   doseLabel   {object}   - Optional { label, color } from getDoseCategoryLabel()
+ */
 function DoseSlider({ label, value, min, max, step, unit, onChange, accentColor, doseLabel }) {
   const acc = accentColor || C.teal;
   const [editing, setEditing] = useState(false);
@@ -679,6 +908,15 @@ function DoseSlider({ label, value, min, max, step, unit, onChange, accentColor,
 }
 
 // ─── SOURCES MODAL ────────────────────────────────────────────────────────────
+/**
+ * Modal overlay showing academic references for the currently selected substance.
+ * Triggered by the "View Sources & References" button.
+ * Click backdrop or ✕ to close.
+ *
+ * Props:
+ *   sourceIds {string[]} - Source IDs to display (resolved from SOURCES)
+ *   onClose   {function} - Close callback
+ */
 function SourcesModal({ sourceIds, onClose }) {
   const sources = sourceIds.map(id => ({ id, ...SOURCES[id] })).filter(s => s.title);
   return (
@@ -704,6 +942,16 @@ function SourcesModal({ sourceIds, onClose }) {
 }
 
 // ─── ALL REFERENCES MODAL ─────────────────────────────────────────────────────
+/**
+ * Modal showing all references across all substances, organized by substance.
+ * Two-level navigation: substance picker → source list for that substance.
+ * Triggered by "View All References & Sources" button.
+ *
+ * Props:
+ *   substances   {Array}    - SUBSTANCES array
+ *   combinations {Array}    - COMBINATIONS array
+ *   onClose      {function} - Close callback
+ */
 function AllReferencesModal({ substances, combinations, onClose }) {
   const [activeId, setActiveId] = useState(null);
   const all = [...substances, ...combinations];
@@ -768,8 +1016,15 @@ function AllReferencesModal({ substances, combinations, onClose }) {
   );
 }
 
-// ─── HISTORY MODAL ────────────────────────────────────────────────────────────
-
+// ─── HISTORY PAGE ─────────────────────────────────────────────────────────────
+/**
+ * Full-page component for the "Descriptions + History" tab.
+ * Two states: substance picker grid → detail view (history text + sources).
+ *
+ * Props:
+ *   substances   {Array} - SUBSTANCES array
+ *   combinations {Array} - COMBINATIONS array
+ */
 function HistoryPage({ substances, combinations }) {
   const [activeId, setActiveId] = useState(null);
   const all = [...substances, ...combinations];
@@ -842,8 +1097,23 @@ function HistoryPage({ substances, combinations }) {
 
 
 // ─── TRIP REPORTS PAGE ───────────────────────────────────────────────────────
+/**
+ * Personal trip journal. Users write and save experience reports.
+ * Reports persisted to localStorage under key "tam_trip_reports_v1".
+ *
+ * Two views:
+ *   "grid" — scrollable list of saved reports (default)
+ *   "form" — report submission form
+ *
+ * Report data model:
+ *   { id: timestamp, date: string, title, substanceId, dose, set, setting, report }
+ *
+ * Props:
+ *   substances   {Array} - SUBSTANCES array (for substance dropdown)
+ *   combinations {Array} - COMBINATIONS array
+ */
 function TripReportsPage({ substances, combinations }) {
-  const KEY = "tam_trip_reports_v1";
+  const KEY = "tam_trip_reports_v1"; // localStorage key — versioned in case schema changes
   const [reports, setReports] = useState(() => {
     try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; }
   });
@@ -932,6 +1202,11 @@ function TripReportsPage({ substances, combinations }) {
 }
 
 
+/**
+ * ResourceLibraryPage — the "Resource Library" tab.
+ * Accordion list of all substances, each expandable to show its full source list.
+ * Reads directly from SUBSTANCE_SOURCE_MAP + SOURCES — no props needed.
+ */
 function ResourceLibraryPage() {
   const bySubstance = Object.entries(SUBSTANCE_SOURCE_MAP).map(([id, sourceIds]) => {
     const substance = [...SUBSTANCES, ...COMBINATIONS].find(s => s.id === id);
@@ -980,11 +1255,33 @@ function ResourceLibraryPage() {
 
 
 // ─── SHARED STYLES ────────────────────────────────────────────────────────────
+// SL: reusable section label style — uppercase, dimmed, small caps feel
 const SL = { color: C.greyDim, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "'Merriweather Sans', sans-serif", marginBottom: 14 };
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
+/**
+ * Root application component.
+ *
+ * State:
+ *   activePage        — active tab: "dosages" | "history" | "library" | "reports"
+ *   selected          — the active substance or combination object
+ *   dose              — current primary dose value (number, in substance's unit)
+ *   comboDoses        — { [substanceId]: number } for combination component sliders
+ *   showSources       — boolean: show SourcesModal for current substance
+ *   showAllRefs       — boolean: show AllReferencesModal
+ *   booster           — { enabled: bool, time: number (min), dose: number }
+ *   selectedRoa       — for ketamine: active key in KETAMINE_ROAS
+ *   selectedMeoSource — for 5-MeO-DMT: active key in MEO_SOURCES
+ *
+ * Derived (computed each render):
+ *   isCombination — true if selected.isCombination
+ *   isKetamine    — true if selected.isKetamine
+ *   is5MeO        — true if selected.is5MeO
+ *   activeSrc     — the active data source: meoData || roaData || selected
+ *                   (determines which doses/effects/timing are used)
+ */
 export default function App() {
-  const [activePage, setActivePage] = useState("dosages"); // dosages | reports | library
+  const [activePage, setActivePage] = useState("dosages"); // dosages | history | library | reports
   const [selected, setSelected] = useState(SUBSTANCES[0]);
   const [dose, setDose] = useState(SUBSTANCES[0].doses.moderate);
   const [comboDoses, setComboDoses] = useState({});
@@ -999,7 +1296,7 @@ export default function App() {
   const is5MeO = !!selected?.is5MeO;
   const roaData = isKetamine ? KETAMINE_ROAS[selectedRoa] : null;
   const meoData = is5MeO ? MEO_SOURCES[selectedMeoSource] : null;
-  const activeSrc = meoData || roaData || selected;
+  const activeSrc = meoData || roaData || selected; // priority: special source > ROA > default substance
   const activeDoses = activeSrc?.doses;
   const activeUnit = activeSrc?.unit;
 
@@ -1007,6 +1304,10 @@ export default function App() {
     ? selected.components.map(id => SUBSTANCES.find(s => s.id === id)).filter(Boolean)
     : [];
 
+  /**
+   * Handle substance/combination selection.
+   * Resets dose and booster to sensible defaults for the new selection.
+   */
   const handleSelect = (item) => {
     setSelected(item);
     if (item.isCombination) {
@@ -1023,6 +1324,7 @@ export default function App() {
     }
   };
 
+  /** Ketamine ROA change — resets dose and booster to the new ROA's defaults. */
   const handleRoaChange = (roaId) => {
     setSelectedRoa(roaId);
     const roa = KETAMINE_ROAS[roaId];
@@ -1030,6 +1332,7 @@ export default function App() {
     setBooster(b => ({ ...b, dose: roa.doses.light, time: Math.round(roa.peak * 0.5) }));
   };
 
+  /** 5-MeO-DMT source change — resets dose and booster to the new source's defaults. */
   const handleMeoSourceChange = (srcId) => {
     setSelectedMeoSource(srcId);
     const src = MEO_SOURCES[srcId];
